@@ -70,7 +70,7 @@ public class UserService {
         return null;
     }
 
-    public User getDefaultUser() {
+    public static User getDefaultUser() {
         User newUser = new User();
         newUser.setId(1);
         newUser.setName("Serhii Babanov");
