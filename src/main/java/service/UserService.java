@@ -4,70 +4,13 @@ import model.Address;
 import model.Company;
 import model.Geo;
 import model.User;
-import repisitory.Repository;
 
-import java.util.Collections;
-import java.util.List;
 
 public class UserService {
-    private final Repository repository;
 
-    public UserService(Repository repository) {
-        this.repository = repository;
-    }
 
-    public User create(User user) {
-        try {
-            return (User) repository.post(user);
-        } catch (Exception e) {
-            System.out.println(e);
-        }
-        return user;
-    }
+    public UserService() {
 
-    public User update(User user) {
-        try {
-            return (User) repository.put(user);
-        } catch (Exception e) {
-            System.out.println(e);
-        }
-        return user;
-    }
-
-    public boolean delete(User user) {
-        try {
-            repository.delete(user);
-        } catch (Exception e) {
-            System.out.println(e);
-        }
-        return true;
-    }
-
-    public List getAll() {
-        try {
-            return repository.get();
-        } catch (Exception e) {
-            System.out.println(e);
-        }
-        return Collections.emptyList();
-    }
-
-    public User getUserById(int id) {
-        try {
-            return (User) repository.getById(id);
-        } catch (Exception e) {
-            System.out.println(e);
-        }
-        return null;
-    }
-
-    public User getByParameter(String username) {
-        try {
-            return (User) repository.getByParameter("username", username);
-        } catch (Exception e) {
-            System.out.println(e);
-        }
-        return null;
     }
 
     public static User getDefaultUser() {

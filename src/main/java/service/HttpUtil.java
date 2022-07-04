@@ -4,56 +4,60 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import model.Comment;
 import model.Post;
+import model.Todos;
 import model.User;
 import org.apache.http.client.utils.URIBuilder;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class HttpUtil {
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
     private static final Gson GSON = new Gson();
-    URIBuilder URIBuilder = new URIBuilder();
+    private final String URL;
 
-    public static User sendGet(URI uri) throws IOException, InterruptedException {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(uri)
-                .GET()
-                .build();
-        HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
-        final User user = GSON.fromJson(response.body(), User.class);
-        return user;
+    public HttpUtil(String url) {
+        URL = url;
     }
 
-    public static User sendGetWithParameters(URI uri, String parameter, String value) throws IOException, InterruptedException, URISyntaxException {
-        URIBuilder builder = new URIBuilder(uri);
-        uri = builder.setParameter(parameter, value).build();
+    public User sendGetWithParameters(String parameter, String value) throws IOException, InterruptedException, URISyntaxException {
+        URIBuilder URI_BUILDER = new URIBuilder(URI.create(URL));
+        URI uri = URI_BUILDER.setPath("users").setParameter(parameter, value).build();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(uri)
                 .GET()
                 .build();
         HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
-        List<User> users = GSON.fromJson(response.body(), new TypeToken<List<User>>() {}.getType());
+        List<User> users = GSON.fromJson(response.body(), new TypeToken<List<User>>() {
+        }.getType());
         return users.get(0);
     }
 
-    public static List<User> sendGetWithListOfResults(URI uri) throws IOException, InterruptedException {
+    public List<User> sendGetWithListOfResults() throws IOException, InterruptedException, URISyntaxException {
+        URIBuilder URI_BUILDER = new URIBuilder(URI.create(URL));
+        URI uri = URI_BUILDER.setPath("users").build();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(uri)
                 .GET()
                 .build();
         HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
-        List<User> users = GSON.fromJson(response.body(), new TypeToken<List<User>>() {}.getType());
+        List<User> users = GSON.fromJson(response.body(), new TypeToken<List<User>>() {
+        }.getType());
         return users;
     }
 
-    public static User sendPost(URI uri, User user) throws IOException, InterruptedException {
+    public User sendPost(User user) throws IOException, InterruptedException, URISyntaxException {
+        URIBuilder URI_BUILDER = new URIBuilder(URI.create(URL));
         final String requestBody = GSON.toJson(user);
+        URI uri = URI_BUILDER.setPath("users").build();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(uri)
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
@@ -63,8 +67,10 @@ public class HttpUtil {
         return GSON.fromJson(response.body(), User.class);
     }
 
-    public static User sendPut(URI uri, User user) throws IOException, InterruptedException {
+    public User sendPut(User user) throws IOException, InterruptedException, URISyntaxException {
+        URIBuilder URI_BUILDER = new URIBuilder(URI.create(URL));
         final String requestBody = GSON.toJson(user);
+        URI uri = URI_BUILDER.setPath("users/" + user.getId()).build();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(uri)
                 .PUT(HttpRequest.BodyPublishers.ofString(requestBody))
@@ -74,9 +80,9 @@ public class HttpUtil {
         return GSON.fromJson(response.body(), User.class);
     }
 
-    public static boolean sendDelete(URI uri, User user) throws URISyntaxException, IOException, InterruptedException {
-        URIBuilder builder = new URIBuilder(uri);
-        uri = builder.setParameter("id", String.valueOf(user.getId())).build();
+    public boolean sendDelete(User user) throws URISyntaxException, IOException, InterruptedException {
+        URIBuilder URI_BUILDER = new URIBuilder(URI.create(URL));
+        URI uri = URI_BUILDER.setPath("users/" + user.getId()).build();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(uri)
                 .DELETE()
@@ -85,31 +91,54 @@ public class HttpUtil {
         return true;
     }
 
-//    public static List<Comment> getCommentsFromLastPost(URI uri, User user) throws IOException, InterruptedException, URISyntaxException {
-//        int idLastPost = getPostsByUser(uri,user).stream().mapToInt(p-> p.getId()).max().orElseGet(() ->0);
-//        URIBuilder builder = new URIBuilder(uri);
-//        uri = builder.setParameter("id", String.valueOf(user.getId())).build();
-//        HttpRequest request = HttpRequest.newBuilder()
-//                .uri(uri)
-//                .GET()
-//                .header("Content-type", "application/json")
-//                .build();
-//        final HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
-//        List<Post> posts = GSON.fromJson(response.body(), new TypeToken<List<Post>>() {}.getType());
-//
-//        List<Comment> comments =
-//    }
-
-    public static List<Post> getPostsByUser(URI uri, User user) throws IOException, InterruptedException, URISyntaxException {
-        URIBuilder builder = new URIBuilder(uri);
-        uri = builder.setParameter("id", String.valueOf(user.getId())).build();
+    public List<Comment> getCommentsFromLastPost(User user) throws IOException, InterruptedException, URISyntaxException {
+        URIBuilder URI_BUILDER = new URIBuilder(URI.create(URL));
+        int idLastPost = getPostsByUser(user).stream().mapToInt(p -> p.getId()).max().orElseGet(() -> 0);
+        URI uri = URI_BUILDER.setPath("comments").setParameter("postId", String.valueOf(idLastPost)).build();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(uri)
                 .GET()
                 .header("Content-type", "application/json")
                 .build();
         final HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
-        List<Post> posts = GSON.fromJson(response.body(), new TypeToken<List<Post>>() {}.getType());
+        List<Comment> comments = GSON.fromJson(response.body(), new TypeToken<List<Comment>>() {
+        }.getType());
+        String fileName = String.format("user-%d-post-%d-comments.json", user.getId(), idLastPost);
+        try (FileOutputStream fileOutputStream = new FileOutputStream(new File(fileName))
+        ) {
+            fileOutputStream.write(response.body().getBytes(StandardCharsets.UTF_8));
+        } catch (IOException ex) {
+            System.err.println(ex.getMessage());
+        }
+        return comments;
+    }
+
+    public List<Todos> getOpenTask(User user) throws URISyntaxException, IOException, InterruptedException {
+        URIBuilder URI_BUILDER = new URIBuilder(URI.create(URL));
+        URI uri = URI_BUILDER.setPath("users/" + user.getId() + "/todos").setParameter("completed", "false").build();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(uri)
+                .GET()
+                .header("Content-type", "application/json")
+                .build();
+        final HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+        List<Todos> tasks = GSON.fromJson(response.body(), new TypeToken<List<Todos>>() {
+        }.getType());
+        return tasks;
+
+    }
+
+    public List<Post> getPostsByUser(User user) throws IOException, InterruptedException, URISyntaxException {
+        URIBuilder URI_BUILDER = new URIBuilder(URI.create(URL));
+        URI uri = URI_BUILDER.setPath("users/" + user.getId() + "/posts").build();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(uri)
+                .GET()
+                .header("Content-type", "application/json")
+                .build();
+        final HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+        List<Post> posts = GSON.fromJson(response.body(), new TypeToken<List<Post>>() {
+        }.getType());
         return posts;
     }
 

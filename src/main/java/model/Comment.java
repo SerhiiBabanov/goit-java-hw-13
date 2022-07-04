@@ -3,7 +3,7 @@ package model;
 import java.util.Objects;
 
 public class Comment {
-    private int postID;
+    private int postId;
     private int id;
     private String name;
     private String email;
@@ -12,12 +12,12 @@ public class Comment {
     public Comment() {
     }
 
-    public int getPostID() {
-        return postID;
+    public int getPostId() {
+        return postId;
     }
 
-    public void setPostID(int postID) {
-        this.postID = postID;
+    public void setPostId(int postId) {
+        this.postId = postId;
     }
 
     public int getId() {
@@ -57,18 +57,18 @@ public class Comment {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Comment comment = (Comment) o;
-        return postID == comment.postID && id == comment.id;
+        return postId == comment.postId && id == comment.id;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(postID, id);
+        return Objects.hash(postId, id);
     }
 
     @Override
     public String toString() {
         return "Comment{" +
-                "postID=" + postID +
+                "postID=" + postId +
                 ", id=" + id +
                 ", name='" + name + '\'' +
                 ", email='" + email + '\'' +
